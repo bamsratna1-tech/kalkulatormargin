@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator HPP & Harga Jual</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Soft gray background */
+        }
+        
+        /* Custom scrollbar for ingredient list */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Smooth transitions */
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 300ms;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800 p-4 md:p-8 flex justify-center items-start">
+
+    <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+        
+        <!-- Header / Title Section -->
+        <div class="col-span-1 lg:col-span-12 text-center mb-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-calculator text-purple-600"></i>
+                Kalkulator Harga Jual & Margin
+            </h1>
+            <p class="text-gray-500 mt-2 text-sm md:text-base">Hitung modal (HPP) dan tentukan harga jual terbaik untuk produkmu.</p>
+        </div>
+
+        <!-- LEFT PANEL: Inputs -->
+        <div class="col-span-1 lg:col-span-7 space-y-6">
+            
+            <!-- Card: Rincian Modal/Bahan -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <i class="fa-solid fa-box-open text-purple-500 mr-2"></i> Rincian Biaya Modal
+                    </h2>
+                    <button onclick="clearAll()" class="text-sm text-red-500 hover:text-red-700 font-medium transition-colors">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Kosongkan
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-500 mb-4">Masukkan semua bahan baku dan biaya kemasan untuk <span class="font-bold text-gray-700">1 Resep / 1 Porsi Produk</span>.</p>
+
+                <!-- Headers for Ingredient Table -->
+                <div class="grid grid-cols-12 gap-3 mb-2 px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    <div class="col-span-6 md:col-span-7">Nama Bahan / Item</div>
+                    <div class="col-span-5 md:col-span-4 text-right">Biaya (Rp)</div>
+                    <div class="col-span-1 md:col-span-1 text-center"></div>
+                </div>
+
+                <!-- Dynamic List Container -->
+                <div id="ingredients-container" class="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
+                    <!-- Ingredients will be injected here by JS -->
+                </div>
+
+                <!-- Add Button -->
+                <button onclick="addIngredientRow()" class="mt-4 w-full py-3 border-2 border-dashed border-purple-200 text-purple-600 rounded-xl hover:bg-purple-50 hover:border-purple-400 transition-all font-medium flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Tambah Bahan
+                </button>
+            </div>
+
+            <!-- Card: Biaya Lain & Strategi Margin -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Biaya Operasional -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Biaya Operasional (Opsional)
+                        <i class="fa-solid fa-circle-info text-gray-400 ml-1 cursor-help" title="Misal: Gas, listrik, tenaga kerja per produk"></i>
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 font-medium">Rp</span>
+                        </div>
+                        <input type="text" id="operational-cost" oninput="formatInputCurrency(this); calculate();" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none font-semibold text-gray-700" placeholder="0">
+                    </div>
+                </div>
+
+                <!-- Target Keuntungan -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Target Keuntungan (%)
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="profit-margin" oninput="calculate()" class="w-full pl-4 pr-10 py-2.5 bg-purple-50 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all outline-none font-semibold text-purple-900" placeholder="Misal: 50" value="50">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <span class="text-purple-600 font-bold">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Dashboard / Hasil -->
+        <div class="col-span-1 lg:col-span-5">
+            <div class="bg-gradient-to-br from-gray-900 to-purple-900 rounded-2xl shadow-lg p-6 lg:p-8 text-white sticky top-8">
+                <h2 class="text-xl font-semibold mb-6 flex items-center border-b border-gray-700 pb-4">
+                    <i class="fa-solid fa-chart-pie mr-3 text-purple-400"></i> Ringkasan Bisnis
+                </h2>
+
+                <!-- Total Modal HPP -->
+                <div class="mb-6">
+                    <p class="text-sm text-gray-400 font-medium mb-1">Total Modal Pokok (HPP)</p>
+                    <p class="text-3xl font-bold text-white tracking-tight" id="result-total-cost">Rp 0</p>
+                </div>
+
+                <!-- Nominal Keuntungan -->
+                <div class="mb-6">
+                    <p class="text-sm text-gray-400 font-medium mb-1 flex items-center gap-2">
+                        Potensi Keuntungan <span id="display-margin-badge" class="bg-purple-500/30 text-purple-300 text-xs px-2 py-0.5 rounded-full">50%</span>
+                    </p>
+                    <p class="text-2xl font-semibold text-green-400" id="result-profit">Rp 0</p>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px w-full bg-gray-700 my-6"></div>
+
+                <!-- Rekomendasi Harga Jual -->
+                <div class="bg-white/10 rounded-xl p-5 border border-white/10 backdrop-blur-sm relative overflow-hidden">
+                    <!-- Decorative blob -->
+                    <div class="absolute -right-6 -top-6 w-24 h-24 bg-purple-500 rounded-full blur-2xl opacity-20 pointer-events-none"></div>
+                    
+                    <p class="text-sm text-gray-300 font-medium mb-2">Rekomendasi Harga Jual</p>
+                    <p class="text-4xl font-extrabold text-white tracking-tight" id="result-selling-price">Rp 0</p>
+                    <p class="text-xs text-gray-400 mt-2">Harga ideal untuk mendapatkan target margin di atas per produk.</p>
+                </div>
+
+                <!-- Custom Harga Jual Simulator -->
+                <div class="mt-6 pt-6 border-t border-gray-700">
+                    <p class="text-sm text-gray-300 font-medium mb-3"><i class="fa-solid fa-scale-balanced mr-2"></i>Simulasi Harga Sendiri</p>
+                    <p class="text-xs text-gray-400 mb-3">Mau jual dengan harga pasaran? Cek untungnya di sini:</p>
+                    
+                    <div class="relative mb-3">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-400 font-medium text-sm">Rp</span>
+                        </div>
+                        <input type="text" id="custom-selling-price" oninput="formatInputCurrency(this); calculateCustomMargin();" class="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-600 rounded-xl focus:ring-1 focus:ring-purple-400 outline-none font-semibold text-white text-sm" placeholder="Ketik harga jual kustom...">
+                    </div>
+
+                    <div class="flex justify-between items-center text-sm px-1">
+                        <span class="text-gray-400">Untung Nyata:</span>
+                        <span id="custom-profit-result" class="font-bold text-white">Rp 0 (<span id="custom-margin-result" class="text-yellow-400">0%</span>)</span>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial Dummy Data (Based on Arzan Herbal context)
+        let ingredients = [
+            { id: 1, name: "Bunga Telang (5 Gram)", cost: 2500 },
+            { id: 2, name: "Sereh & Rempah Lain", cost: 1500 },
+            { id: 3, name: "Gula Batu / Pemanis", cost: 2000 },
+            { id: 4, name: "Botol Plastik 330ml", cost: 1200 },
+            { id: 5, name: "Stiker Label Arzan", cost: 800 }
+        ];
+
+        const container = document.getElementById('ingredients-container');
+
+        // Format number to IDR string (e.g. Rp 10.000)
+        function formatIDR(number) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(number);
+        }
+
+        // Clean currency string to integer
+        function parseCurrency(str) {
+            if (!str) return 0;
+            const cleaned = str.toString().replace(/[^0-9]/g, '');
+            return parseInt(cleaned, 10) || 0;
+        }
+
+        // Auto-format input fields while typing
+        function formatInputCurrency(inputElement) {
+            let val = parseCurrency(inputElement.value);
+            if (val === 0) {
+                inputElement.value = '';
+            } else {
+                // simple grouping
+                inputElement.value = new Intl.NumberFormat('id-ID').format(val);
+            }
+        }
+
+        // Render all ingredient rows
+        function renderIngredients() {
+            container.innerHTML = '';
+            
+            if (ingredients.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-gray-400 text-sm italic">
+                        Belum ada bahan. Klik "Tambah Bahan" di bawah.
+                    </div>
+                `;
+                return;
+            }
+
+            ingredients.forEach((ing, index) => {
+                const row = document.createElement('div');
+                row.className = "grid grid-cols-12 gap-3 items-center bg-gray-50 p-2 rounded-xl border border-gray-100 group transition-all hover:border-purple-200 hover:bg-purple-50/30";
+                
+                row.innerHTML = `
+                    <div class="col-span-6 md:col-span-7">
+                        <input type="text" 
+                               value="${ing.name}" 
+                               oninput="updateIngredientName(${ing.id}, this.value)"
+                               placeholder="Nama bahan..."
+                               class="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-purple-400 outline-none text-gray-700">
+                    </div>
+                    <div class="col-span-5 md:col-span-4 relative">
+                        <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                            <span class="text-gray-400 font-medium text-xs">Rp</span>
+                        </div>
+                        <input type="text" 
+                               value="${ing.cost > 0 ? new Intl.NumberFormat('id-ID').format(ing.cost) : ''}" 
+                               oninput="formatInputCurrency(this); updateIngredientCost(${ing.id}, this.value)"
+                               placeholder="0"
+                               class="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-purple-400 outline-none font-semibold text-gray-700 text-right">
+                    </div>
+                    <div class="col-span-1 md:col-span-1 flex justify-center">
+                        <button onclick="removeIngredient(${ing.id})" class="text-gray-300 hover:text-red-500 transition-colors p-2" title="Hapus">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function addIngredientRow() {
+            const newId = ingredients.length > 0 ? Math.max(...ingredients.map(i => i.id)) + 1 : 1;
+            ingredients.push({ id: newId, name: "", cost: 0 });
+            renderIngredients();
+            
+            // Focus on the newly added row's name input
+            setTimeout(() => {
+                const inputs = container.querySelectorAll('input[type="text"]');
+                if(inputs.length > 1) {
+                    inputs[inputs.length - 2].focus(); // -2 because each row has 2 inputs
+                }
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        }
+
+        function removeIngredient(id) {
+            ingredients = ingredients.filter(ing => ing.id !== id);
+            renderIngredients();
+            calculate();
+        }
+
+        function updateIngredientName(id, name) {
+            const item = ingredients.find(ing => ing.id === id);
+            if(item) item.name = name;
+        }
+
+        function updateIngredientCost(id, costStr) {
+            const item = ingredients.find(ing => ing.id === id);
+            if(item) {
+                item.cost = parseCurrency(costStr);
+                calculate();
+            }
+        }
+
+        function clearAll() {
+            ingredients = [];
+            document.getElementById('operational-cost').value = '';
+            document.getElementById('custom-selling-price').value = '';
+            renderIngredients();
+            calculate();
+        }
+
+        function calculate() {
+            // 1. Calculate Total HPP (Cost of Goods Sold)
+            const ingredientTotal = ingredients.reduce((sum, ing) => sum + ing.cost, 0);
+            const opCostStr = document.getElementById('operational-cost').value;
+            const opCost = parseCurrency(opCostStr);
+            
+            const totalHPP = ingredientTotal + opCost;
+
+            // 2. Calculate Pricing based on Target Margin
+            const marginInput = document.getElementById('profit-margin').value;
+            const targetMargin = parseFloat(marginInput) || 0;
+
+            // Formula: Selling Price = Total Cost + (Total Cost * Margin Percentage)
+            // (Note: technically this is markup, but widely understood as margin in small biz)
+            const profit = totalHPP * (targetMargin / 100);
+            const recommendedPrice = totalHPP + profit;
+
+            // 3. Update DOM
+            document.getElementById('result-total-cost').innerText = formatIDR(totalHPP);
+            document.getElementById('result-profit').innerText = '+ ' + formatIDR(profit);
+            document.getElementById('result-selling-price').innerText = formatIDR(recommendedPrice);
+            document.getElementById('display-margin-badge').innerText = targetMargin + '%';
+
+            // 4. Update custom simulator if exists
+            calculateCustomMargin();
+        }
+
+        function calculateCustomMargin() {
+            const ingredientTotal = ingredients.reduce((sum, ing) => sum + ing.cost, 0);
+            const opCost = parseCurrency(document.getElementById('operational-cost').value);
+            const totalHPP = ingredientTotal + opCost;
+
+            const customPriceStr = document.getElementById('custom-selling-price').value;
+            const customPrice = parseCurrency(customPriceStr);
+
+            const resultProfitEl = document.getElementById('custom-profit-result');
+            const resultMarginEl = document.getElementById('custom-margin-result');
+
+            if (customPrice > 0 && totalHPP > 0) {
+                const actualProfit = customPrice - totalHPP;
+                // Calculate percentage relative to HPP
+                const actualMarginPercent = (actualProfit / totalHPP) * 100;
+
+                if(actualProfit >= 0) {
+                    resultProfitEl.innerHTML = `<span class="text-green-400">${formatIDR(actualProfit)}</span> (<span class="text-green-400">+${actualMarginPercent.toFixed(1)}%</span>)`;
+                } else {
+                    resultProfitEl.innerHTML = `<span class="text-red-400">${formatIDR(actualProfit)}</span> (<span class="text-red-400">${actualMarginPercent.toFixed(1)}%</span>) - RUGI!`;
+                }
+            } else {
+                resultProfitEl.innerHTML = `Rp 0 (<span class="text-yellow-400">0%</span>)`;
+            }
+        }
+
+        window.onload = function() {
+            renderIngredients();
+            calculate();
+        };
+    </script>
+</body>
+</html>
